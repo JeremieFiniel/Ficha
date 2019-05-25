@@ -9,6 +9,7 @@ def capture():
 	if cameraRecorde:
 		print("Camera allready recorde")
 	else:
+		camera = picamera.PiCamera()
 		cameraRecorde = True
 		print("Recorde start")
 		setText('Recording video')
@@ -17,6 +18,8 @@ def capture():
 		setText('Stop recording')
 		camera.stop_recording()
 		setText('Welcome to Fisha')
+		print("Recorde stop")
+		camera.close()
 		cameraRecorde = False
 
 def buttonPressedCB(button):
@@ -24,8 +27,9 @@ def buttonPressedCB(button):
 	if GPIO.input(button) :
 		setText ("Button %s pressed"%buttons[button]);
 		print('Button pressed %s is %s'%(button, buttons[button]))
-		thread = Thread(target=capture)
-		thread.start()
+		if buttons[button] == "OK":
+			thread = Thread(target=capture)
+			thread.start()
 
 
 buttons = {
@@ -45,8 +49,6 @@ buttons = {
 
 GPIO.setmode(GPIO.BCM)
 
-camera = picamera.PiCamera()
-camera.resolution(640, 480)
 cameraRecorde = False
 
 print('Initialize buttons')
