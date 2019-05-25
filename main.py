@@ -2,7 +2,7 @@ from grove_lcd import *
 import RPi.GPIO as GPIO
 import time
 import picamera
-from threading import Timer
+from threading import Thread
 
 def capture():
 	global cameraRecorde
