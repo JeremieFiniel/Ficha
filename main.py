@@ -17,16 +17,26 @@ def capture():
 	if cameraRecorde:
 		print("Camera allready recorde")
 	else:
-		date = dt.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-		camera = picamera.PiCamera()
 		cameraRecorde = True
+
+		print("Start motor")
+		GPIO.output(relay, GPIO.HIGH)
+
+		date = dt.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
+
+		camera = picamera.PiCamera()
 		print("Recorde start")
 		setText('Recording video')
+
 		camera.start_recording(date+'.h264')
 		camera.wait_recording(10)
+
+		print("Stop motor")
+		GPIO.output(relay, GPIO.LOW)
+
 		setText('Stop recording')
 		camera.stop_recording()
-		setText('Welcome to Fisha')
+		setText('Identifiez vous')
 		print("Recorde stop")
 		camera.close()
 		cameraRecorde = False
@@ -67,6 +77,7 @@ def buttonPressedCB(button):
 			thread.start()
 
 
+
 buttons = {
 	4  : "Annule",
 	17 : 1,
@@ -82,6 +93,8 @@ buttons = {
 	19 : 3
 }
 
+relay = 26
+
 GPIO.setmode(GPIO.BCM)
 
 cameraRecorde = False
@@ -91,6 +104,8 @@ print('Initialize buttons')
 for button, value in buttons.items():
 	GPIO.setup(button, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 	GPIO.add_event_detect(button, GPIO.RISING, callback=buttonPressedCB, bouncetime=200)
+
+GPIO.setup(relay, GPIO.OUT, initial=GPIO.LOW)
 
 setText('Identifiez vous')
 
