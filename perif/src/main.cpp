@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Keypad.h>
+#include <LiquidCrystal_I2C.h>
 
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
@@ -15,11 +16,14 @@ byte colPins[COLS] = {6, 8, 4}; //connect to the column pinouts of the keypad
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
-int LED = 13;
+LiquidCrystal_I2C lcd(0x27,16,4);
 
 void setup() {
     Serial.begin(9600);
-    pinMode(LED, OUTPUT);
+    lcd.init();
+    lcd.backlight();
+    lcd.setCursor(0, 0);
+    lcd.print("Coucou");
     Serial.println("<Startup>");
 }
 
@@ -31,7 +35,15 @@ void loop() {
 
 void serialEvent() {
     while (Serial.available()) {
-        Serial.print((char)Serial.read());
+        char key = Serial.read();
+        if (key == '\n')
+            lcd.setCursor(0,1);
+        else if (key == '\t')
+            lcd.clear();
+        else {
+            lcd.print(key);
+            Serial.print(key);
+        }
     }
 }
 
