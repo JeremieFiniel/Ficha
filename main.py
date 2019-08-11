@@ -88,6 +88,6 @@ GPIO.setup(relay, GPIO.OUT, initial=GPIO.LOW)
 setText('Identifiez vous')
 
 while True:
-    raw_input('Press Enter to continue...')
+    input('Press Enter to continue...')
     thread = Thread(target=capture)
     thread.start()
