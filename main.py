@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import RPi.GPIO as GPIO
+import pip
 import subprocess
 import time
 import picamera
@@ -7,6 +7,12 @@ import os
 import datetime as dt
 from threading import Thread
 import socket
+
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    pip.main(['install', 'RPi.GPIO'])
+    import RPi.GPIO as GPIO
 
 server = socket.socket()
 server_host = "192.168.1.50"
