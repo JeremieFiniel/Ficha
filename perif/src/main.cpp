@@ -38,7 +38,7 @@ void serialEvent() {
         char key = Serial.read();
         if (key == '\n')
             lcd.setCursor(0,1);
-        else if (key == '\t')
+        else if (key == ';')
             lcd.clear();
         else {
             lcd.print(key);

@@ -6,6 +6,7 @@ import os
 import datetime as dt
 from threading import Thread
 import socket
+import string
 
 try:
     import RPi.GPIO as GPIO
@@ -88,10 +89,17 @@ GPIO.setmode(GPIO.BCM)
 cameraRecorde = False
 
 GPIO.setup(relay, GPIO.OUT, initial=GPIO.LOW)
+ser = Serial('/dev/ttyUSB0', 9600, timeout=3)
+
+ser.write(b'ping')
+ser.flush()
+
+ser.timeout=None
 
 setText('Identifiez vous')
 
 while True:
-    input('Press Enter to continue...')
+    read = ser.read()
+    print("read " + read)
     thread = Thread(target=capture)
     thread.start()
