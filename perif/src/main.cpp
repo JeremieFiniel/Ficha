@@ -95,7 +95,7 @@ void serialEvent() {
                     commande = NO;
                 else {
                     lcd.print(key);
-                    Serial.print(key);
+                    debug.print(key);
                 }
                 break;
         }
