@@ -2,6 +2,13 @@
 #include <Keypad.h>
 #include <LiquidCrystal_I2C.h>
 
+
+#ifdef DEBUG
+#define DEBUG(x) Serial.x
+#else
+#define DEBUG(x)
+#endif
+
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
@@ -33,22 +40,6 @@ LiquidCrystal_I2C lcd(0x27,16,4);
 enum Commande commande;
 enum State state;
 
-class Debug {
-    public:
-        Debug(){};
-        void println(String str) {
-            if (enable)
-                Serial.println(str);
-        }
-        void print(String str) {
-            if (enable)
-                Serial.print(str);
-        }
-        bool enable;
-
-};
-
-Debug debug;
 
 void setup() {
     Serial.begin(9600);
@@ -56,9 +47,8 @@ void setup() {
     lcd.backlight();
     lcd.setCursor(0, 0);
     lcd.print("Coucou");
-    debug.enable = false;
 
-    debug.println("<Startup>");
+    DEBUG(println("<Startup>"));
 
     commande = NO;
 
@@ -79,7 +69,7 @@ void serialEvent() {
                 switch (key) {
                     case 'w':
                         commande = WRITE;
-                        debug.println("Go to write mode");
+                        DEBUG(println("Go to write mode"));
                         break;
                     case 'p':
                         Serial.print("PONG;");
@@ -95,7 +85,7 @@ void serialEvent() {
                     commande = NO;
                 else {
                     lcd.print(key);
-                    debug.print(key);
+                    DEBUG(print(key));
                 }
                 break;
         }
