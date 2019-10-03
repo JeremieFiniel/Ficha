@@ -87,14 +87,46 @@ def capture():
         print("done sending")
         server.close()
 
+def askForCode():
+    global code
+    ser.write(b';Identifiez vous:\n')
+    code.clean()
 
-class Code:
-    code = []
-    def append(c):
-        code.append(c)
+def badCode():
+    ser.write(b';Code invalide')
+    time.sleep(3)
+    askForCode()
 
-    def clean:
-        code = []
+def valideCode(code):
+    ser.write(b';Bonjour ')
+    print(code)
+    ser.write(code)
+    ser.write(b'\nDeposez votre poubel')
+
+class Code():
+    p_code = []
+
+    def append(self, c):
+        global ser
+        if c >= b'0' and c <= b'9':
+            self.p_code.append(c)
+            ser.write(c)
+        elif c == b'#':
+            if len(self.p_code) != 5:
+                print('bade code, length : ', len(self.p_code))
+                print(self.p_code)
+                badCode()
+            else:
+                valideCode(self.p_code)
+        elif c == b'*':
+            askForCode()
+
+
+    def clean(self):
+        self.p_code = []
+
+    def get(self):
+        return self.p_code
 
 
 relay = 26
@@ -117,14 +149,13 @@ if not read.endswith(b'PONG;'):
 ser.timeout=None
 
 ser.write(b'w')
-ser.write(b';Identifiez vous:\n');
 
 code = Code()
+askForCode()
 
 while True:
     read = ser.read()
     print("read ", read)
-    ser.write(read)
     code.append(read)
 
     #thread = Thread(target=capture)
