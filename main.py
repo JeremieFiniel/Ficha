@@ -8,6 +8,7 @@ from threading import Thread
 import socket
 import string
 
+
 try:
     import RPi.GPIO as GPIO
 except ImportError:
@@ -18,6 +19,12 @@ try:
 except ImportError:
     pip.main(['install', 'picamera'])
     import picamera
+
+try:
+    import serial
+except ImportError:
+    pip.main(['install', 'pyserial'])
+    import serial
 
 server = socket.socket()
 server_host = "192.168.1.50"
@@ -81,6 +88,14 @@ def capture():
         server.close()
 
 
+class Code:
+    code = []
+    def append(c):
+        code.append(c)
+
+    def clean:
+        code = []
+
 
 relay = 26
 
@@ -89,17 +104,28 @@ GPIO.setmode(GPIO.BCM)
 cameraRecorde = False
 
 GPIO.setup(relay, GPIO.OUT, initial=GPIO.LOW)
-ser = Serial('/dev/ttyUSB0', 9600, timeout=3)
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
+time.sleep(2)
 
-ser.write(b'ping')
+ser.write(b'p')
 ser.flush()
+read = ser.read_until(';')
+
+if not read.endswith(b'PONG;'):
+    raise Exception('Do not manage to connect to hardware')
 
 ser.timeout=None
 
-setText('Identifiez vous')
+ser.write(b'w')
+ser.write(b';Identifiez vous:\n');
+
+code = Code()
 
 while True:
     read = ser.read()
-    print("read " + read)
-    thread = Thread(target=capture)
-    thread.start()
+    print("read ", read)
+    ser.write(read)
+    code.append(read)
+
+    #thread = Thread(target=capture)
+    #thread.start()
