@@ -30,8 +30,8 @@ enum Commande {
 };
 
 
-byte rowPins[ROWS] = {7, 2, 3, 5}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {6, 8, 4}; //connect to the column pinouts of the keypad
+byte rowPins[ROWS] = {8, 3, 4, 6}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {7, 9, 5}; //connect to the column pinouts of the keypad
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
@@ -46,7 +46,7 @@ void setup() {
     lcd.init();
     lcd.backlight();
     lcd.setCursor(0, 0);
-    lcd.print("Coucou");
+    lcd.print("Strating up");
 
     DEBUG(println("<Startup>"));
 
