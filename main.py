@@ -98,10 +98,9 @@ def badCode():
     askForCode()
 
 def valideCode(code):
-    ser.write(b';Bonjour ')
-    print(code)
-    ser.write(code)
-    ser.write(b'\nDeposez votre poubel')
+    global userLogged
+    userLogged = True
+    ser.write(b';Deposez votre\npoubel')
 
 class Code():
     p_code = []
@@ -134,6 +133,7 @@ relay = 26
 GPIO.setmode(GPIO.BCM)
 
 cameraRecorde = False
+userLogged = False
 
 GPIO.setup(relay, GPIO.OUT, initial=GPIO.LOW)
 ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
@@ -156,7 +156,8 @@ askForCode()
 while True:
     read = ser.read()
     print("read ", read)
-    code.append(read)
+    if not userLogged:
+        code.append(read)
 
     #thread = Thread(target=capture)
     #thread.start()
