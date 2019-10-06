@@ -7,7 +7,7 @@ import datetime as dt
 from threading import Thread
 import socket
 import string
-
+from enum import Enum
 
 try:
     import RPi.GPIO as GPIO
@@ -36,59 +36,70 @@ def setText(text):
 
 def capture():
     global cameraRecorde
+    global ser
+    global state
     if cameraRecorde:
         print("Camera allready recorde")
     else:
-        cameraRecorde = True
-
-        print("Start motor")
-        GPIO.output(relay, GPIO.HIGH)
-
-        date = dt.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
-
-        camera = picamera.PiCamera()
-        print("Recorde start")
-        setText('Recording video')
-
-        camera.start_recording(date+'.h264')
-        camera.wait_recording(10)
-
-        print("Stop motor")
-        GPIO.output(relay, GPIO.LOW)
-
-        setText('Stop recording')
-        camera.stop_recording()
-        setText('Identifiez vous')
-        print("Recorde stop")
-        camera.close()
-        cameraRecorde = False
-
-        print("Rename video file")
-        command = "MP4Box -add {}.h264 {}.mp4".format(date, date)
         try:
-            output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
-        except subprocess.CalledProcessError as e:
-            print('FAIL:\ncmd:{}\noutput:{}'.format(e.cmd, e.output))
+            cameraRecorde = True
 
-        print('File renamed')
+            print("Start motor")
+            GPIO.output(relay, GPIO.HIGH)
 
-        print('Remove old file')
-        os.remove(date+'.h264')
+            date = dt.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 
-        print('Send video to server')
-        server.connect((server_host, server_port))
-        server.send(date+'.mp4')
-        with open(date+'.mp4', 'rb') as file:
-            chunk = file.read(1024*8)
-            while chunk:
-                server.send(chunk)
+            camera = picamera.PiCamera()
+            print("Recorde start")
+            setText('Recording video')
+
+            camera.start_recording(date+'.h264')
+            camera.wait_recording(10)
+
+            print("Stop motor")
+            GPIO.output(relay, GPIO.LOW)
+
+            setText('Stop recording')
+            camera.stop_recording()
+            setText('Identifiez vous')
+            print("Recorde stop")
+            camera.close()
+            cameraRecorde = False
+
+            print("Rename video file")
+            command = "MP4Box -add {}.h264 {}.mp4".format(date, date)
+            try:
+                output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
+            except subprocess.CalledProcessError as e:
+                print('FAIL:\ncmd:{}\noutput:{}'.format(e.cmd, e.output))
+                raise
+
+            print('File renamed')
+            ser.write(b';Fermer la poubel')
+            state = State.WaitForTrashClose
+
+            print('Remove old file')
+            os.remove(date+'.h264')
+
+            print('Send video to server')
+            server.connect((server_host, server_port))
+            server.send(date+'.mp4')
+            with open(date+'.mp4', 'rb') as file:
                 chunk = file.read(1024*8)
+                while chunk:
+                    server.send(chunk)
+                    chunk = file.read(1024*8)
 
-        print("done sending")
-        server.close()
+            print("done sending")
+            server.close()
+        except:
+            state = State.WaitForTrashClose
 
 def askForCode():
     global code
+    global state
+    global ser
+    state = State.WaitForLoggin
     ser.write(b';Identifiez vous:\n')
     code.clean()
 
@@ -99,10 +110,13 @@ def badCode():
 
 def valideCode(code):
     global userLogged
+    global state
     userLogged = True
     ser.write(b';Deposez votre\npoubel')
+    state = State.WaitForTrashReady
 
 class Code():
+    global state
     p_code = []
 
     def append(self, c):
@@ -127,13 +141,19 @@ class Code():
     def get(self):
         return self.p_code
 
+class State(Enum):
+    WaitForLoggin = 1
+    WaitForTrashReady = 2
+    WaitForPicture = 3
+    WaitForTrashClose = 4
+
+state = State.WaitForLoggin
 
 relay = 26
 
 GPIO.setmode(GPIO.BCM)
 
 cameraRecorde = False
-userLogged = False
 
 GPIO.setup(relay, GPIO.OUT, initial=GPIO.LOW)
 ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
@@ -155,9 +175,22 @@ askForCode()
 
 while True:
     read = ser.read()
-    print("read ", read)
-    if not userLogged:
-        code.append(read)
+    if read == b';':
+        read = ser.read()
+        if read == b'b':
+            print("Button pressed ");
+            if state is State.WaitForTrashReady:
+                ser.write(b';Analyse en cours...')
+                thread = Thread(target=capture)
+                thread.start()
+                state = State.WaitForPicture
+            if state is State.WaitForTrashClose:
+                state = State.WaitForLoggin
+                askForCode()
+    else:
+        if state is State.WaitForLoggin:
+            print("read ", read)
+            code.append(read)
 
     #thread = Thread(target=capture)
     #thread.start()

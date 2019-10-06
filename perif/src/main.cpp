@@ -40,6 +40,9 @@ LiquidCrystal_I2C lcd(0x27,16,4);
 enum Commande commande;
 enum State state;
 
+void buttonPressed() {
+    Serial.print(";b");
+}
 
 void setup() {
     Serial.begin(9600);
@@ -49,6 +52,8 @@ void setup() {
     lcd.print("Strating up");
 
     DEBUG(println("<Startup>"));
+
+    attachInterrupt(digitalPinToInterrupt(2), buttonPressed, RISING);
 
     commande = NO;
 
