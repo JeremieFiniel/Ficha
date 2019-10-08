@@ -29,10 +29,7 @@ except ImportError:
 server = socket.socket()
 server_host = "192.168.1.50"
 server_port = 8123
-
-def setText(text):
-    print(text);
-
+imagePath = "/home/pi/Ficha/images"
 
 def capture():
     global cameraRecorde
@@ -44,56 +41,41 @@ def capture():
         try:
             cameraRecorde = True
 
-            print("Start motor")
-            GPIO.output(relay, GPIO.HIGH)
-
             date = dt.datetime.now().strftime("%Y-%m-%d_%H.%M.%S")
 
             camera = picamera.PiCamera()
             print("Recorde start")
-            setText('Recording video')
 
-            camera.start_recording(date+'.h264')
-            camera.wait_recording(10)
+            camera.start_preview()
+            print("Capture image ", imagePath +"/" + date + '.jpg')
+            time.sleep(5)
+            camera.capture(imagePath + "/" + date + '.jpg')
+            camera.stop_preview()
 
-            print("Stop motor")
-            GPIO.output(relay, GPIO.LOW)
-
-            setText('Stop recording')
-            camera.stop_recording()
-            setText('Identifiez vous')
             print("Recorde stop")
             camera.close()
             cameraRecorde = False
-
-            print("Rename video file")
-            command = "MP4Box -add {}.h264 {}.mp4".format(date, date)
-            try:
-                output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
-            except subprocess.CalledProcessError as e:
-                print('FAIL:\ncmd:{}\noutput:{}'.format(e.cmd, e.output))
-                raise
-
-            print('File renamed')
             ser.write(b';Fermer la poubel')
             state = State.WaitForTrashClose
 
-            print('Remove old file')
-            os.remove(date+'.h264')
-
-            print('Send video to server')
-            server.connect((server_host, server_port))
-            server.send(date+'.mp4')
-            with open(date+'.mp4', 'rb') as file:
-                chunk = file.read(1024*8)
-                while chunk:
-                    server.send(chunk)
+            print('Send image to server')
+            try:
+                server.connect((server_host, server_port))
+                server.send(bytes(date + '.jpg', 'UTF-8'))
+                with open(imagePath + "/" + date+'.jpg', 'rb') as file:
                     chunk = file.read(1024*8)
+                    while chunk:
+                        server.send(chunk)
+                        chunk = file.read(1024*8)
 
-            print("done sending")
-            server.close()
+                print("done sending")
+                server.close()
+                os.remove(imagePath + "/" + date + '.jpg')
+            except ConnectionRefusedError:
+                print("Enable to contact server")
         except:
             state = State.WaitForTrashClose
+            raise
 
 def askForCode():
     global code
@@ -181,9 +163,7 @@ while True:
             print("Button pressed ");
             if state is State.WaitForTrashReady:
                 ser.write(b';Analyse en cours...')
-                thread = Thread(target=capture)
-                thread.start()
-                state = State.WaitForPicture
+                capture()
             if state is State.WaitForTrashClose:
                 state = State.WaitForLoggin
                 askForCode()
