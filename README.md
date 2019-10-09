@@ -31,4 +31,6 @@ To upload code to USB connected Arduino :
 
 ## Server side
 
-Not present yet ...
+In server directory.
+To run server, node.js must be installed :
+`node server.js`
